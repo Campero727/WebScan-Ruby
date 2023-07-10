@@ -5,6 +5,10 @@
 
 require 'wappalyzer'
 
+arguments=ARGV
+
+trap('INT', 'SIG_IGN')
+
 class String
   def red; colorize(self, "\e[1m\e[31m"); end
   def green; colorize(self, "\e[1m\e[32m"); end
@@ -24,23 +28,37 @@ end
 
 def detect_tech(url)
   analizer=Wappalyzer::Detector.new
-  results=analizer.analyze(url)
-
-  puts "*".red*50
-  results.each do |tech|
-    puts "Technology:".purple+" #{tech[0]}".blue
-    puts "Categories: ".purple
+  begin 
+    results=analizer.analyze(url)
     
-    tech[1]['categories'].each do |cat|
-      puts "\t ->".yellow+" #{cat}"
+    puts "*".red*50
+    results.each do |tech|
+      puts "Technology:".purple+" #{tech[0]}".blue
+      puts "Categories: ".purple
+    
+      tech[1]['categories'].each do |cat|
+        puts "\t ->".yellow+" #{cat}"
+      end
+    
+      puts "Confidence: ".purple+"#{tech[1]['confidence']}"
+      puts "Version: ".purple+"#{tech[1]['version']}\n\n"
     end
-    
-    puts "Confidence: ".purple+"#{tech[1]['confidence']}"
-    puts "Version: ".purple+"#{tech[1]['version']}\n\n"
-  end
+  rescue  
+    puts "[!] No se pudo conectar al Host verifique la URL".red
+    exit 0
+  end 
+
+  
 
   puts "*".red*50
 end
 
-detect_tech('http://192.168.225.245')
-
+unless arguments.empty?
+  if ARGV.size==1
+    detect_tech(arguments[0])
+  else 
+    puts "[!]Only One Argument <URL>".red
+  end
+else 
+  puts "[!] Use".red+" #{File.basename(__FILE__)}".blue+" <URL>".purple
+end
